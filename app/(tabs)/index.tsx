@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, LinearGradient } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MessageCircle, Users, ChevronRight, UserPlus } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -71,8 +71,13 @@ export default function DashboardScreen() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="dark" />
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+      <StatusBar style="light" />
+      <LinearGradient
+        colors={[colors.primary, colors.secondary]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.headerGradient}
+      >
         <View style={styles.header}>
           <View>
             <Text style={styles.welcomeText}>Welcome back,</Text>
@@ -90,7 +95,9 @@ export default function DashboardScreen() {
             )}
           </TouchableOpacity>
         </View>
+      </LinearGradient>
 
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Messages</Text>
@@ -287,44 +294,54 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
-  scrollView: {
-    flex: 1,
+  headerGradient: {
+    paddingTop: 60,
+    paddingBottom: 32,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 60,
-    paddingBottom: 20,
   },
   welcomeText: {
     fontSize: 16,
-    color: colors.darkGray,
+    color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 4,
   },
   userName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.darkText,
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   avatarPlaceholder: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: colors.primary,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   avatarText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  scrollView: {
+    flex: 1,
+    marginTop: -20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    backgroundColor: '#FFFFFF',
   },
   section: {
     paddingHorizontal: 20,
