@@ -29,41 +29,68 @@ export default function DashboardScreen() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const totalSupervisees = MOCK_SUPERVISEES.reduce((acc, sup) => acc + (sup.stats?.activeClients || 0), 0);
+  const analyticsCategories = MOCK_SUPERVISEES.length > 0 ? {
+    messageLength: MOCK_SUPERVISEES
+      .map(supervisee => ({
+        name: supervisee.name,
+        value: (supervisee.stats?.messagesPerWeek || []).reduce((a, b) => a + b, 0) / 7,
+        color: supervisee.color,
+      }))
+      .sort((a, b) => (typeof b.value === 'number' && typeof a.value === 'number' ? b.value - a.value : 0)),
+
+    responseTime: MOCK_SUPERVISEES
+      .map(supervisee => ({
+        name: supervisee.name,
+        value: (supervisee.stats?.responseTime || []).reduce((a, b) => a + b, 0) / (supervisee.stats?.responseTime?.length || 1),
+        color: supervisee.color,
+      }))
+      .sort((a, b) => (typeof b.value === 'number' && typeof a.value === 'number' ? b.value - a.value : 0)),
+
+    monthlyRetention: MOCK_SUPERVISEES
+      .map(supervisee => ({
+        name: supervisee.name,
+        value: supervisee.stats?.monthlyRetention || 0,
+        color: supervisee.color,
+      }))
+      .sort((a, b) => (typeof b.value === 'number' && typeof a.value === 'number' ? b.value - a.value : 0)),
+  } : {
+    messageLength: [],
+    responseTime: [],
+    monthlyRetention: [],
+  };
+
+  const calculateBarWidth = (value: number, maxValue: number) => {
+    if (maxValue === 0) return 0;
+    return (value / maxValue) * 100;
+  };
+
+  const formatAnalyticsValue = (value: number | undefined, suffix: string) => {
+    if (typeof value !== 'number') return 'N/A';
+    return `${value.toFixed(1)}${suffix}`;
+  };
 
   return (
     <View style={styles.container}>
-      <StatusBar style="light" />
-      <View style={styles.headerBackground}>
-        <View style={styles.headerContent}>
-          <View style={styles.headerTop}>
-            <View>
-              <Text style={styles.welcomeText}>Welcome back,</Text>
-              <Text style={styles.userName}>{MOCK_USER.name}</Text>
-            </View>
-            <TouchableOpacity onPress={() => router.push('/profile')}>
-              {MOCK_USER.avatarUrl ? (
-                <Image source={{ uri: MOCK_USER.avatarUrl }} style={styles.avatar} />
-              ) : (
-                <View style={styles.avatarPlaceholder}>
-                  <Text style={styles.avatarText}>
-                    {MOCK_USER.name.split(' ').map(n => n[0]).join('')}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
+      <StatusBar style="dark" />
+      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.welcomeText}>Welcome back,</Text>
+            <Text style={styles.userName}>{MOCK_USER.name}</Text>
           </View>
-          
-          <View style={styles.statsContainer}>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{totalSupervisees}</Text>
-              <Text style={styles.statLabel}>Total Supervisees</Text>
-            </View>
-          </View>
+          <TouchableOpacity onPress={() => router.push('/profile')}>
+            {MOCK_USER.avatarUrl ? (
+              <Image source={{ uri: MOCK_USER.avatarUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <Text style={styles.avatarText}>
+                  {MOCK_USER.name.split(' ').map(n => n[0]).join('')}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
-      </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Messages</Text>
@@ -156,6 +183,100 @@ export default function DashboardScreen() {
             </View>
           </View>
         )}
+
+        {MOCK_USER.role === 'Training Director' && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Analytics</Text>
+            <View style={styles.analyticsContainer}>
+              <View style={styles.totalStats}>
+                <View style={styles.totalStat}>
+                  <Text style={styles.totalStatLabel}>Total Supervisees</Text>
+                  <Text style={styles.totalStatValue}>
+                    {MOCK_SUPERVISEES.reduce((acc, sup) => acc + (sup.stats?.activeClients || 0), 0)}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.analyticsCategory}>
+                <Text style={styles.categoryTitle}>Average Message Length</Text>
+                {analyticsCategories.messageLength.map((item) => (
+                  <View key={item.name} style={styles.analyticsBar}>
+                    <View 
+                      style={[
+                        styles.analyticsProgress, 
+                        { 
+                          width: `${calculateBarWidth(
+                            typeof item.value === 'number' ? item.value : 0,
+                            typeof analyticsCategories.messageLength[0]?.value === 'number' ? analyticsCategories.messageLength[0].value : 0
+                          )}%`,
+                          backgroundColor: item.color,
+                        }
+                      ]} 
+                    />
+                    <View style={styles.analyticsContent}>
+                      <Text style={styles.analyticsName}>{item.name}</Text>
+                      <Text style={styles.analyticsValue}>
+                        {formatAnalyticsValue(item.value, 'm')}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.analyticsCategory}>
+                <Text style={styles.categoryTitle}>Average Response Time</Text>
+                {analyticsCategories.responseTime.map((item) => (
+                  <View key={item.name} style={styles.analyticsBar}>
+                    <View 
+                      style={[
+                        styles.analyticsProgress, 
+                        { 
+                          width: `${calculateBarWidth(
+                            typeof item.value === 'number' ? item.value : 0,
+                            typeof analyticsCategories.responseTime[0]?.value === 'number' ? analyticsCategories.responseTime[0].value : 0
+                          )}%`,
+                          backgroundColor: item.color,
+                        }
+                      ]} 
+                    />
+                    <View style={styles.analyticsContent}>
+                      <Text style={styles.analyticsName}>{item.name}</Text>
+                      <Text style={styles.analyticsValue}>
+                        {formatAnalyticsValue(item.value, 'h')}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.analyticsCategory}>
+                <Text style={styles.categoryTitle}>Average Monthly Retention</Text>
+                {analyticsCategories.monthlyRetention.map((item) => (
+                  <View key={item.name} style={styles.analyticsBar}>
+                    <View 
+                      style={[
+                        styles.analyticsProgress, 
+                        { 
+                          width: `${calculateBarWidth(
+                            typeof item.value === 'number' ? item.value : 0,
+                            typeof analyticsCategories.monthlyRetention[0]?.value === 'number' ? analyticsCategories.monthlyRetention[0].value : 0
+                          )}%`,
+                          backgroundColor: item.color,
+                        }
+                      ]} 
+                    />
+                    <View style={styles.analyticsContent}>
+                      <Text style={styles.analyticsName}>{item.name}</Text>
+                      <Text style={styles.analyticsValue}>
+                        {formatAnalyticsValue(item.value, 'm')}
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -164,90 +285,49 @@ export default function DashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.primary,
+    backgroundColor: '#FFFFFF',
   },
-  headerBackground: {
-    backgroundColor: colors.primary,
-    paddingTop: 60,
-    paddingBottom: 40,
+  scrollView: {
+    flex: 1,
   },
-  headerContent: {
-    paddingHorizontal: 20,
-  },
-  headerTop: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 20,
   },
   welcomeText: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: colors.darkGray,
     marginBottom: 4,
   },
   userName: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.darkText,
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   avatarPlaceholder: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   avatarText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   },
-  statsContainer: {
-    flexDirection: 'row',
-    marginBottom: -30,
-    zIndex: 1,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
-  },
-  statValue: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.primary,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 14,
-    color: colors.darkGray,
-  },
-  content: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -24,
-  },
   section: {
     paddingHorizontal: 20,
-    paddingTop: 32,
     marginBottom: 24,
   },
   sectionHeader: {
@@ -258,8 +338,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '700',
+    fontWeight: '600',
     color: colors.darkText,
+    marginBottom: 16,
   },
   seeAllButton: {
     flexDirection: 'row',
@@ -276,13 +357,13 @@ const styles = StyleSheet.create({
   messageCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 12,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
   },
   messageSenderAvatar: {
@@ -322,17 +403,18 @@ const styles = StyleSheet.create({
   },
   usersList: {
     gap: 12,
+    marginBottom: 16,
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 12,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
     elevation: 2,
   },
   userAvatar: {
@@ -377,6 +459,87 @@ const styles = StyleSheet.create({
   userTime: {
     fontSize: 12,
     color: colors.darkGray,
+  },
+  analyticsContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    gap: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  analyticsCategory: {
+    marginBottom: 24,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.darkText,
+    marginBottom: 12,
+  },
+  analyticsBar: {
+    height: 44,
+    backgroundColor: colors.lightGray,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  analyticsProgress: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    bottom: 0,
+    opacity: 0.2,
+  },
+  analyticsContent: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  analyticsName: {
+    fontSize: 14,
+    color: colors.darkText,
+    fontWeight: '500',
+  },
+  analyticsValue: {
+    fontSize: 14,
+    color: colors.darkText,
+    fontWeight: '600',
+  },
+  totalStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 24,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.lightGray,
+  },
+  totalStat: {
+    flex: 1,
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: colors.lightGray,
+    borderRadius: 12,
+    marginHorizontal: 8,
+  },
+  totalStatLabel: {
+    fontSize: 14,
+    color: colors.darkGray,
+    marginBottom: 8,
+  },
+  totalStatValue: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: colors.darkText,
   },
   pendingUserName: {
     fontWeight: '700',
