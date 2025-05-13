@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, LinearGradient } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { MessageCircle, Users, ChevronRight, UserPlus } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -72,12 +72,7 @@ export default function DashboardScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <LinearGradient
-        colors={[colors.primary, colors.secondary]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.headerGradient}
-      >
+      <View style={styles.headerGradient}>
         <View style={styles.header}>
           <View>
             <Text style={styles.welcomeText}>Welcome back,</Text>
@@ -95,7 +90,7 @@ export default function DashboardScreen() {
             )}
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
@@ -297,6 +292,7 @@ const styles = StyleSheet.create({
   headerGradient: {
     paddingTop: 60,
     paddingBottom: 32,
+    backgroundColor: colors.primary,
   },
   header: {
     flexDirection: 'row',
